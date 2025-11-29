@@ -1,0 +1,339 @@
+extends CharacterBody2D
+
+# ОТРЕГУЛИРОВАННЫЕ СКОРОСТИ
+const SPEED = 200.0  # Уменьшена скорость бега
+const MAX_JUMP_VELOCITY = -300.0  # Уменьшена максимальная высота прыжка
+const MIN_JUMP_VELOCITY = -100.0  # Уменьшена минимальная высота прыжка
+const JUMP_CHARGE_TIME = 0.3
+const HARD_LANDING_THRESHOLD = 700.0  # Уменьшен порог жесткого приземления
+
+# ОБНОВЛЕННЫЕ ПАРАМЕТРЫ ДЛЯ ИНЕРЦИИ
+const ACCELERATION = 0.2  # Коэффициент ускорения на земле (0-1)
+const FRICTION = 0.08     # СИЛЬНО УМЕНЬШЕНО трение на земле для длинного скольжения
+const AIR_ACCELERATION = 0.1  # Коэффициент ускорения в воздухе (0-1)
+const AIR_FRICTION = 0.05     # СИЛЬНО УМЕНЬШЕНО трение в воздухе для длинного скольжения
+
+# НОВЫЕ КОНСТАНТЫ ДЛЯ НЕУЯЗВИМОСТИ
+const INVULNERABILITY_DURATION = 2.0
+const DAMAGE_ANIMATION_DURATION = 0.3  # Длительность анимации урона
+
+# Константы для атаки
+const SUPER_ATTACK_HOLD_TIME = 0.5
+const ATTACK_SCENE = preload("res://2D-platformer-pathfinding-godot-77b63721313a08ec4dcab8253d38a4b6893723c5/scenes/player/player.tscn")
+
+@onready var anim = $AnimatedSprite2D
+var health = 100 
+var gold = 0
+
+var jump_charge: float = 0.0
+var is_charging_jump: bool = false
+var was_on_floor: bool = false
+var fall_velocity: float = 0.0
+var is_hard_landing: bool = false
+var hard_landing_timer: float = 0.0
+
+# НОВЫЕ ПЕРЕМЕННЫЕ ДЛЯ НЕУЯЗВИМОСТИ И УРОНА
+var is_invulnerable: bool = false
+var invulnerability_timer: float = 0.0
+var is_taking_damage: bool = false  # Флаг получения урона
+var damage_timer: float = 0.0       # Таймер анимации урона
+
+# Переменные для сенсорного управления
+var touch_jump_pressed: bool = false
+var touch_jump_just_pressed: bool = false
+
+# Переменные для анимаций атаки и магии
+var is_attacking: bool = false
+var is_using_magic: bool = false
+var attack_timer: float = 0.0
+var magic_timer: float = 0.0
+
+# Переменные для виртуальных кнопок
+var x_button_pressed: bool = false
+var x_button_hold_time: float = 0.0
+var y_button_pressed: bool = false
+
+# Переменная состояния смерти
+var is_dead: bool = false
+
+const GRAVITY = 980.0
+
+func _ready() -> void:
+	add_to_group("player")
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+
+func _physics_process(delta: float) -> void:
+	# ЕСЛИ ПЕРСОНАЖ МЕРТВ - НИЧЕГО НЕ ДЕЛАЕМ
+	if is_dead:
+		if not is_on_floor():
+			velocity += Vector2(0, GRAVITY) * delta
+			move_and_slide()
+		return
+	
+	# ОБНОВЛЕНИЕ ТАЙМЕРА НЕУЯЗВИМОСТИ
+	if is_invulnerable:
+		invulnerability_timer -= delta
+		if invulnerability_timer <= 0:
+			is_invulnerable = false
+			# Восстанавливаем нормальную видимость
+			modulate = Color(1, 1, 1, 1)
+	
+	# ОБНОВЛЕНИЕ ТАЙМЕРА АНИМАЦИИ УРОНА
+	if is_taking_damage:
+		damage_timer -= delta
+		if damage_timer <= 0:
+			is_taking_damage = false
+	
+	# Обновляем таймеры анимаций
+	if is_attacking:
+		attack_timer -= delta
+		if attack_timer <= 0:
+			is_attacking = false
+	
+	if is_using_magic:
+		magic_timer -= delta
+		if magic_timer <= 0:
+			is_using_magic = false
+	
+	# Обработка удержания кнопки X для супер атаки
+	if x_button_pressed and not is_attacking and not is_using_magic and not is_hard_landing and not is_taking_damage:
+		x_button_hold_time += delta
+		if x_button_hold_time >= SUPER_ATTACK_HOLD_TIME and not is_attacking:
+			is_attacking = true
+			attack_timer = 0.8
+			anim.play("Attak_supper")
+			create_attack_area(true)  # Супер атака
+			print("Super attack!")
+	
+	# Добавляем гравитацию (ВСЕГДА, даже при получении урона)
+	if not is_on_floor():
+		velocity += Vector2(0, GRAVITY) * delta
+		if velocity.y > 0:
+			fall_velocity = velocity.y
+
+	# Определяем, когда персонаж только что приземлился
+	var just_landed = is_on_floor() and not was_on_floor
+	
+	# Обработка жесткого приземления (только если не получаем урон)
+	if just_landed and not is_taking_damage:
+		if fall_velocity > HARD_LANDING_THRESHOLD:
+			is_hard_landing = true
+			hard_landing_timer = 0.5
+			anim.play("Land")
+			print("Hard landing! Fall velocity: ", fall_velocity)
+		fall_velocity = 0.0
+	
+	if is_hard_landing:
+		hard_landing_timer -= delta
+		if hard_landing_timer <= 0:
+			is_hard_landing = false
+			if is_on_floor() and not is_charging_jump and not is_attacking and not is_using_magic and not is_taking_damage:
+				anim.play("Idle")
+
+	# Обработка прыжка (только если не получаем урон)
+	if not is_taking_damage:
+		var jump_input_pressed = Input.is_action_pressed("ui_accept") or touch_jump_pressed
+		var jump_input_just_pressed = Input.is_action_just_pressed("ui_accept") or touch_jump_just_pressed
+
+		if jump_input_just_pressed and is_on_floor() and not is_hard_landing and not is_attacking and not is_using_magic:
+			is_charging_jump = true
+			jump_charge = 0.0
+			velocity.y = MIN_JUMP_VELOCITY
+			anim.play("Jump")
+
+		if is_charging_jump and jump_input_pressed:
+			jump_charge += delta
+			jump_charge = min(jump_charge, JUMP_CHARGE_TIME)
+			
+			var jump_factor = jump_charge / JUMP_CHARGE_TIME
+			var target_velocity = lerp(MIN_JUMP_VELOCITY, MAX_JUMP_VELOCITY, jump_factor)
+			
+			if velocity.y < 0:
+				velocity.y = min(velocity.y, target_velocity)
+
+		if is_charging_jump and (not jump_input_pressed or jump_charge >= JUMP_CHARGE_TIME):
+			is_charging_jump = false
+
+		if just_landed:
+			is_charging_jump = false
+			jump_charge = 0.0
+
+	# Обработка атаки (только если не получаем урон)
+	if (Input.is_action_just_pressed("attack") or (x_button_pressed and x_button_hold_time == 0)) and not is_attacking and not is_using_magic and not is_hard_landing and not is_taking_damage:
+		is_attacking = true
+		attack_timer = 0.6
+		anim.play("Attak")
+		create_attack_area(false)  # Обычная атака
+		print("Normal attack!")
+	
+	# Обработка магии (только если не получаем урон)
+	if (Input.is_action_just_pressed("magic") or y_button_pressed) and not is_attacking and not is_using_magic and not is_hard_landing and not is_taking_damage:
+		is_using_magic = true
+		magic_timer = 0.8
+		anim.play("magic")
+		print("Magic!")
+
+	# ИСПРАВЛЕННАЯ СИСТЕМА ДВИЖЕНИЯ С ИНЕРЦИЕЙ
+	var direction := Input.get_axis("ui_left", "ui_right")
+	
+	if not is_hard_landing and not is_attacking and not is_using_magic and not is_taking_damage:
+		if direction != 0:
+			# Ускорение при движении с использованием lerp для плавности
+			var target_velocity_x = direction * SPEED
+			var acceleration = ACCELERATION if is_on_floor() else AIR_ACCELERATION
+			
+			# Плавное ускорение к целевой скорости
+			velocity.x = lerp(velocity.x, target_velocity_x, acceleration)
+			
+			# Поворот спрайта
+			if direction < 0:
+				anim.flip_h = true
+			else:
+				anim.flip_h = false
+			
+			# Анимация бега только на земле
+			if is_on_floor() and not is_charging_jump and not is_hard_landing:
+				anim.play("Run")
+		else:
+			# Замедление при остановке с использованием lerp для плавности
+			var friction = FRICTION if is_on_floor() else AIR_FRICTION
+			
+			# Плавное замедление до нуля
+			velocity.x = lerp(velocity.x, 0.0, friction)
+			
+			# Анимация покоя только когда на земле и не в других состояниях
+			if is_on_floor() and not is_charging_jump and not is_hard_landing and not just_landed and not is_attacking and not is_using_magic and not is_taking_damage:
+				anim.play("Idle")
+	
+	# Анимация прыжка/падения (блокируем во время получения урона)
+	if not is_on_floor() and not is_hard_landing and not is_attacking and not is_using_magic and not is_taking_damage:
+		if velocity.y < 0:
+			anim.play("Jump")
+		else:
+			anim.play("Fall")
+
+	# Логика смерти
+	if health <= 0 and not is_dead:
+		die()
+	
+	was_on_floor = is_on_floor()
+	touch_jump_just_pressed = false
+	
+	move_and_slide()
+
+# ФУНКЦИЯ СОЗДАНИЯ ОБЛАСТИ АТАКИ
+func create_attack_area(is_super: bool) -> void:
+	if ATTACK_SCENE:
+		var attack_area = ATTACK_SCENE.instantiate()
+		
+		# Позиционируем область атаки в зависимости от направления взгляда
+		var offset_x = 40
+		if anim.flip_h:
+			offset_x = -offset_x
+		
+		attack_area.position = global_position + Vector2(offset_x, 0)
+		attack_area.damage = 30 if is_super else 10
+		
+		if is_super:
+			attack_area.set_super_attack()
+		
+		# Добавляем в текущую сцену
+		get_parent().add_child(attack_area)
+		print("Attack area created at position: ", attack_area.position)
+	else:
+		print("ERROR: Attack scene not loaded!")
+
+# ФУНКЦИЯ СМЕРТИ
+func die() -> void:
+	is_dead = true
+	anim.play("Deadh")
+	print("Player died!")
+	
+	# Останавливаем движение
+	velocity = Vector2.ZERO
+	
+	# Ждем завершения анимации и перезагружаем сцену
+	await get_tree().create_timer(1.5).timeout
+	get_tree().change_scene_to_file("res://menu.tscn")
+
+# ФУНКЦИЯ ПОЛУЧЕНИЯ УРОНА
+func take_damage(damage_amount: int) -> void:
+	if is_dead or is_invulnerable:
+		print("Player is invulnerable or dead, no damage taken")
+		return  # Мертвый или неуязвимый персонаж не получает урон
+	
+	health -= damage_amount
+	
+	# АКТИВИРУЕМ НЕУЯЗВИМОСТЬ
+	is_invulnerable = true
+	invulnerability_timer = INVULNERABILITY_DURATION
+	
+	# АКТИВИРУЕМ АНИМАЦИЮ УРОНА
+	is_taking_damage = true
+	damage_timer = DAMAGE_ANIMATION_DURATION
+	
+	# Визуальный эффект неуязвимости (мигание)
+	start_invulnerability_effect()
+	
+	if health > 0:
+		anim.play("Damage")
+		print("Player took damage: ", damage_amount, ". Health: ", health)
+		
+		# Легкий отскок при получении урона
+		velocity.y = -200
+		velocity.x = -100 if anim.flip_h else 100
+	else:
+		health = 0
+		print("Player died!")
+
+# ФУНКЦИЯ ВИЗУАЛЬНОГО ЭФФЕКТА НЕУЯЗВИМОСТИ
+func start_invulnerability_effect() -> void:
+	# Создаем твин для мигания
+	var tween = create_tween()
+	tween.set_loops(8)  # 8 циклов мигания за 2 секунды
+	
+	# Мигание: прозрачный -> обычный -> прозрачный
+	tween.tween_property(self, "modulate", Color(1, 1, 1, 0.3), 0.125)
+	tween.tween_property(self, "modulate", Color(1, 1, 1, 1), 0.125)
+
+# ФУНКЦИИ СЕНСОРНОГО УПРАВЛЕНИЯ
+func _on_touch_screen_button_pressed() -> void:
+	touch_jump_pressed = true
+	touch_jump_just_pressed = true
+
+func _on_touch_screen_button_released() -> void:
+	touch_jump_pressed = false
+
+func _on_x_botton_pressed() -> void:
+	x_button_pressed = true
+	x_button_hold_time = 0.0
+
+func _on_x_botton_released() -> void:
+	x_button_pressed = false
+	if x_button_hold_time < SUPER_ATTACK_HOLD_TIME and x_button_hold_time > 0 and not is_attacking and not is_using_magic and not is_hard_landing and not is_taking_damage:
+		is_attacking = true
+		attack_timer = 0.6
+		anim.play("Attak")
+		create_attack_area(false)  # Обычная атака
+		print("Normal attack (button release)!")
+	x_button_hold_time = 0.0
+
+func _on_y_botton_pressed() -> void:
+	y_button_pressed = true
+	if not is_attacking and not is_using_magic and not is_hard_landing and not is_taking_damage:
+		is_using_magic = true
+		magic_timer = 0.8
+		anim.play("magic")
+		print("Magic!")
+
+func _on_y_botton_released() -> void:
+	y_button_pressed = false
+
+# ФУНКЦИЯ ЛЕЧЕНИЯ
+func heal(heal_amount: int) -> void:
+	if is_dead:   
+		return  # Мертвого нельзя вылечить
+	
+	health += heal_amount
+	health = min(health, 100)
+	print("Player healed: ", heal_amount, ". Health: ", health)

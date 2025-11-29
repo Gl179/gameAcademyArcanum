@@ -1,0 +1,19 @@
+[gd_scene load_steps=4 format=3 uid="uid://bdtlj1jwuu8dw"]
+
+[ext_resource type="Script" uid="uid://dm7605ubg7dnu" path="res://Player/magic.gd" id="1_52gbg"]
+[ext_resource type="Texture2D" uid="uid://crenotx202yab" path="res://asets/Tiny RPG Character Asset Pack v1.03b -Free Soldier&Orc/Tiny RPG Character Asset Pack v1.03 -Free Soldier&Orc/Arrow(Projectile)/Arrow01(32x32).png" id="1_s3la1"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_52gbg"]
+size = Vector2(23, 9)
+
+[node name="magic" type="Area2D"]
+monitorable = false
+script = ExtResource("1_52gbg")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(1.3125, 1.3125)
+texture = ExtResource("1_s3la1")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0.5, 0.5)
+shape = SubResource("RectangleShape2D_52gbg")

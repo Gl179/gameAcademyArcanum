@@ -1,0 +1,36 @@
+[gd_scene load_steps=5 format=3 uid="uid://dkbfuoprv4dgm"]
+
+[ext_resource type="Texture2D" uid="uid://dfx6wtt0gnnkq" path="res://asets/forest-nature-fantasy-tileset-free/Fantasy Swamp Forest/Free/BG_1/BG_1.png" id="1_e8j8q"]
+[ext_resource type="Script" uid="uid://c6voxwp5b26lu" path="res://bg.gd" id="1_iq1of"]
+[ext_resource type="Texture2D" uid="uid://xm8grehx6oq7" path="res://asets/forest-nature-fantasy-tileset-free/Fantasy Swamp Forest/Free/BG_2/BG_2.png" id="2_iq1of"]
+[ext_resource type="Texture2D" uid="uid://xe0hhwj6oxlc" path="res://asets/forest-nature-fantasy-tileset-free/Fantasy Swamp Forest/Free/BG_3/BG_3.png" id="3_36ycx"]
+
+[node name="BG" type="Parallax2D"]
+script = ExtResource("1_iq1of")
+
+[node name="Parallax2D3" type="Parallax2D" parent="."]
+scroll_scale = Vector2(0.2, 1)
+repeat_size = Vector2(1148, 0)
+
+[node name="Bg3" type="Sprite2D" parent="Parallax2D3"]
+position = Vector2(576.25006, 323)
+scale = Vector2(0.56127924, 1.615)
+texture = ExtResource("3_36ycx")
+
+[node name="Parallax2D2" type="Parallax2D" parent="."]
+scroll_scale = Vector2(0.5, 1)
+repeat_size = Vector2(1148, 0)
+
+[node name="Bg2" type="Sprite2D" parent="Parallax2D2"]
+position = Vector2(578, 324)
+scale = Vector2(0.6351128, 1.625)
+texture = ExtResource("2_iq1of")
+
+[node name="Parallax2D" type="Parallax2D" parent="."]
+scroll_scale = Vector2(100, 0)
+repeat_size = Vector2(1148, 0)
+
+[node name="Bg1" type="Sprite2D" parent="Parallax2D"]
+position = Vector2(575.875, 325.75003)
+scale = Vector2(0.59629345, 1.6187501)
+texture = ExtResource("1_e8j8q")
