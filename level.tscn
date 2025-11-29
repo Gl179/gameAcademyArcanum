@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" uid="uid://dgc3aw5bx8y02" path="res://collectibles/gold.tscn" id="6_1ainy"]
 [ext_resource type="PackedScene" uid="uid://mvefm3rfp5p2" path="res://traps/spikes.tscn" id="6_42xju"]
 [ext_resource type="PackedScene" uid="uid://dmr0fcamx7t56" path="res://addons/virtual_joystick/virtual_joystick_scene.tscn" id="6_n6hdu"]
+[ext_resource type="Script" uid="uid://nholnyxy7nd0" path="res://boss/orc_boss.gd" id="7_hvubb"]
 [ext_resource type="Texture2D" uid="uid://w7rc6nnw37qm" path="res://asets/XBOX BUTTONS - Premium Assets/XBOX BUTTONS - Premium Assets/XBOX BUTTONS - Premium Assets/Digital Buttons/ABXY/button_xbox_digital_a_9.png" id="7_km5ld"]
 [ext_resource type="Texture2D" uid="uid://dk1231tr564ve" path="res://asets/XBOX BUTTONS - Premium Assets/XBOX BUTTONS - Premium Assets/XBOX BUTTONS - Premium Assets/Digital Buttons/ABXY/button_xbox_digital_a_10.png" id="8_i2t4f"]
 [ext_resource type="Texture2D" uid="uid://d1so5rp8yriag" path="res://asets/XBOX BUTTONS - Premium Assets/XBOX BUTTONS - Premium Assets/XBOX BUTTONS - Premium Assets/Digital Buttons/ABXY/button_xbox_digital_y_10.png" id="8_v5j5c"]
@@ -26,7 +27,6 @@
 [ext_resource type="PackedScene" uid="uid://tjvrxtml3jn1" path="res://platforms/movplatform.tscn" id="18_4c15r"]
 [ext_resource type="PackedScene" uid="uid://cbnolqheu3oi2" path="res://savecr/save_crystal.tscn" id="19_ilwjd"]
 [ext_resource type="PackedScene" uid="uid://ds3w7ggm851fh" path="res://dash_crystal.tscn" id="26_2h3vt"]
-[ext_resource type="PackedScene" uid="uid://b8gxqd418sirw" path="res://boss/orc_boss.tscn" id="28_aoqsc"]
 [ext_resource type="PackedScene" uid="uid://b8gxqd418sirw" path="res://mobs/orc.tscn" id="28_hvubb"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_f2txt"]
@@ -510,7 +510,7 @@ tile_set = SubResource("TileSet_0b4ue")
 [node name="player" type="Node2D" parent="."]
 
 [node name="player" parent="player" instance=ExtResource("1_vonw3")]
-position = Vector2(2070, 8)
+position = Vector2(1902, 8)
 script = ExtResource("2_oi3di")
 
 [node name="mobs" type="Node2D" parent="."]
@@ -527,9 +527,12 @@ position = Vector2(2439, 583)
 [node name="orc3" parent="mobs" instance=ExtResource("28_hvubb")]
 position = Vector2(3561, 270)
 
-[node name="orc5" parent="mobs" instance=ExtResource("28_aoqsc")]
-position = Vector2(1266, -31)
+[node name="boss" type="Node2D" parent="."]
+
+[node name="orc_boss" parent="boss" instance=ExtResource("28_hvubb")]
+position = Vector2(1159, -52)
 scale = Vector2(6, 6)
+script = ExtResource("7_hvubb")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
@@ -702,7 +705,7 @@ position = Vector2(3804, 91)
 position = Vector2(847, 454)
 
 [node name="DashCrystal" parent="." instance=ExtResource("26_2h3vt")]
-position = Vector2(3378, 238)
+position = Vector2(960, 465)
 
 [node name="Gold" parent="." instance=ExtResource("6_1ainy")]
 position = Vector2(927, 570)

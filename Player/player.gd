@@ -1,7 +1,7 @@
 extends CharacterBody2D
 
 # ОСНОВНЫЕ ПАРАМЕТРЫ
-const SPEED = 100.0
+const SPEED = 110.0
 const MAX_JUMP_VELOCITY = -300.0
 const MIN_JUMP_VELOCITY = -100.0
 const JUMP_CHARGE_TIME = 0.3

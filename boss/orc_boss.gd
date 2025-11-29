@@ -4,8 +4,8 @@ extends CharacterBody2D
 
 # Характеристики босса
 var speed = 70
-var health = 3000
-var max_health = 3000
+var health = 100
+var max_health = 100
 var chase = false
 var alive = true
 var is_attacking: bool = false
