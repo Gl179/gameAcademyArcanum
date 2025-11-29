@@ -254,4 +254,4 @@ func spawn_rewards():
 			var impulse = Vector2(randf_range(-80, 80), randf_range(-120, -180))
 			coin.apply_impulse(impulse)
 	
-	print("Босс оставил награду!")
+	
