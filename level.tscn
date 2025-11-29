@@ -510,7 +510,7 @@ tile_set = SubResource("TileSet_0b4ue")
 [node name="player" type="Node2D" parent="."]
 
 [node name="player" parent="player" instance=ExtResource("1_vonw3")]
-position = Vector2(376, 450)
+position = Vector2(50, 441)
 script = ExtResource("2_oi3di")
 
 [node name="mobs" type="Node2D" parent="."]
@@ -526,6 +526,33 @@ position = Vector2(2439, 583)
 
 [node name="orc3" parent="mobs" instance=ExtResource("28_hvubb")]
 position = Vector2(3561, 270)
+
+[node name="orc5" parent="mobs" instance=ExtResource("28_hvubb")]
+position = Vector2(2581, 126)
+
+[node name="orc6" parent="mobs" instance=ExtResource("28_hvubb")]
+position = Vector2(2957, 166)
+
+[node name="SaveCrystal" parent="mobs" instance=ExtResource("19_ilwjd")]
+position = Vector2(2168, 90)
+
+[node name="spikes" parent="mobs" instance=ExtResource("6_42xju")]
+position = Vector2(2490, 137)
+
+[node name="spikes2" parent="mobs" instance=ExtResource("6_42xju")]
+position = Vector2(2507, 137)
+
+[node name="spikes3" parent="mobs" instance=ExtResource("6_42xju")]
+position = Vector2(2524, 137)
+
+[node name="spikes4" parent="mobs" instance=ExtResource("6_42xju")]
+position = Vector2(2649, 138)
+
+[node name="spikes5" parent="mobs" instance=ExtResource("6_42xju")]
+position = Vector2(2666, 138)
+
+[node name="spikes6" parent="mobs" instance=ExtResource("6_42xju")]
+position = Vector2(2683, 138)
 
 [node name="boss" type="Node2D" parent="."]
 
