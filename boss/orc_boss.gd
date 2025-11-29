@@ -3,9 +3,9 @@ extends CharacterBody2D
 @onready var anim = $AnimatedSprite2D
 
 # Характеристики босса
-var speed = 70
-var health = 100
-var max_health = 100
+var speed = 120  # Увеличил скорость
+var health = 500  # Увеличил здоровье
+var max_health = 500
 var chase = false
 var alive = true
 var is_attacking: bool = false
@@ -16,11 +16,16 @@ var player_node: Node2D = null
 
 # Таймеры и кулдауны
 var attack_cooldown: float = 0.0
-const ATTACK_COOLDOWN_TIME: float = 2.0
+var attack_cooldown_time: float = 1.5  # Сделал переменной вместо константы
+var jump_cooldown: float = 0.0
+const JUMP_COOLDOWN_TIME: float = 2.0  # Чаще прыгает
+var move_timer: float = 0.0
+const MOVE_CHANGE_TIME: float = 1.5  # Чаще меняет направление
 
-# Визуальные эффекты
-var health_bar: ColorRect
-var health_bar_bg: ColorRect
+# Параметры прыжка
+var is_jumping: bool = false
+var jump_velocity: float = -350.0
+var jump_gravity: float = 980.0
 
 const GRAVITY = 980.0
 
@@ -31,48 +36,13 @@ func _ready() -> void:
 	add_to_group("boss")
 	add_to_group("damageable")
 	
-	# Создаем визуальные элементы
-	create_health_bar()
-	
 	print("=== БОСС ЗАГРУЖЕН ===")
 	print("Здоровье: ", health)
 	
 	find_player()
-
-func create_health_bar():
-	# ПРОСТОЙ ВАРИАНТ - создаем как дочерние элементы
-	# Создаем фон полоски здоровья
-	health_bar_bg = ColorRect.new()
-	health_bar_bg.name = "HealthBarBG"
-	health_bar_bg.size = Vector2(204, 24)  # Увеличил высоту для лучшей видимости
-	health_bar_bg.color = Color(0, 0, 0)  # Черный фон
-	health_bar_bg.position = Vector2(-102, -180)  # Выше над головой
-	add_child(health_bar_bg)
 	
-	# Создаем основную полоску здоровья
-	health_bar = ColorRect.new()
-	health_bar.name = "HealthBar"
-	health_bar.size = Vector2(200, 20)
-	health_bar.color = Color(0, 1, 0)  # Зеленый
-	health_bar.position = Vector2(-100, -178)
-	add_child(health_bar)
-	
-	print("Полоска здоровья создана")
-
-func update_health_bar():
-	if health_bar:
-		var health_ratio = float(health) / float(max_health)
-		health_bar.size.x = 200 * health_ratio
-		
-		# Меняем цвет в зависимости от здоровья
-		if health_ratio > 0.6:
-			health_bar.color = Color(0, 1, 0)  # Зеленый
-		elif health_ratio > 0.3:
-			health_bar.color = Color(1, 1, 0)  # Желтый
-		else:
-			health_bar.color = Color(1, 0, 0)  # Красный
-		
-		print("Обновлена полоска здоровья: ", health_ratio * 100, "%")
+	# Начинаем с случайного движения
+	move_timer = MOVE_CHANGE_TIME
 
 func show_attack_effect():
 	# Подсветка при атаке
@@ -104,21 +74,31 @@ func _physics_process(delta: float) -> void:
 	if attack_cooldown > 0:
 		attack_cooldown -= delta
 	
-	# Гравитация
-	if not is_on_floor():
+	if jump_cooldown > 0:
+		jump_cooldown -= delta
+	
+	# Таймер смены направления движения
+	move_timer -= delta
+	if move_timer <= 0:
+		move_timer = MOVE_CHANGE_TIME
+	
+	# Обработка прыжка
+	if is_jumping:
+		velocity.y += jump_gravity * delta
+		if is_on_floor():
+			is_jumping = false
+	
+	# Гравитация для обычного состояния
+	if not is_on_floor() and not is_jumping:
 		velocity.y += GRAVITY * delta
 	
-	# Основная логика ИИ
-	if chase and alive and not is_attacking and not is_taking_damage:
-		handle_chasing_state()
-	else:
-		velocity.x = 0
-		if not is_attacking and not is_taking_damage:
-			anim.play("Idle")
+	# Основная логика ИИ - всегда активен!
+	if alive and not is_attacking and not is_taking_damage and not is_jumping:
+		handle_ai_state(delta)
 	
 	move_and_slide()
 
-func handle_chasing_state():
+func handle_ai_state(delta: float):
 	if not player_node:
 		find_player()
 		if not player_node:
@@ -127,17 +107,63 @@ func handle_chasing_state():
 	var direction = (player_node.position - position).normalized()
 	var distance = position.distance_to(player_node.position)
 	
+	# Поворот в сторону игрока
+	anim.flip_h = direction.x < 0
+	
+	# АКТИВНОЕ ПОВЕДЕНИЕ: всегда двигается или атакует
+	if chase:
+		# Преследование игрока
+		handle_chasing_state(distance, direction)
+	else:
+		# Патрулирование/активное движение по арене
+		handle_patrol_state()
+	
+	# Частые прыжки по арене
+	if jump_cooldown <= 0 and randf() < 0.3:  # 30% шанс прыгнуть
+		start_arena_jump()
+	
+	# Атака при близкой дистанции
+	if distance < 80 and attack_cooldown <= 0:
+		start_attack()
+
+func handle_chasing_state(distance: float, direction: Vector2):
 	# Движение к игроку
 	velocity.x = direction.x * speed
+	anim.play("walk")
 	
-	# Поворот
-	anim.flip_h = direction.x < 0
+	# Иногда меняем направление для большей активности
+	if move_timer <= 0:
+		velocity.x *= -1  # Резкая смена направления
+
+func handle_patrol_state():
+	# Активное движение по арене когда игрок далеко
+	if move_timer <= 0:
+		# Случайное направление
+		velocity.x = [-speed, speed][randi() % 2]
+	else:
+		# Продолжаем движение в текущем направлении
+		velocity.x = velocity.x if velocity.x != 0 else speed
 	
 	anim.play("walk")
 	
-	# Атака при близкой дистанции
-	if distance < 100 and attack_cooldown <= 0:
-		start_attack()
+	# Если уперлись в стену - прыгаем
+	if is_on_wall():
+		start_arena_jump()
+
+func start_arena_jump():
+	if is_jumping or jump_cooldown > 0:
+		return
+	
+	print("Босс прыгает по арене!")
+	is_jumping = true
+	jump_cooldown = JUMP_COOLDOWN_TIME
+	
+	# Прыжок в случайном направлении
+	var jump_direction = Vector2.LEFT if randf() < 0.5 else Vector2.RIGHT
+	velocity = jump_direction * speed * 0.8
+	velocity.y = jump_velocity
+	
+	anim.play("Jump")
 
 func start_attack():
 	if is_attacking:
@@ -153,20 +179,23 @@ func start_attack():
 	anim.play("Attak")
 	
 	# Ждем перед нанесением урона
-	await get_tree().create_timer(0.4).timeout
+	await get_tree().create_timer(0.3).timeout
 	
 	# Наносим урон если игрок рядом
-	if alive and player_node and position.distance_to(player_node.position) < 120:
+	if alive and player_node and position.distance_to(player_node.position) < 100:
 		print("Босс попадает по игроку!")
 		if player_node.has_method("take_damage"):
-			player_node.take_damage(30)
+			player_node.take_damage(25)  # Немного уменьшил урон
 	
 	await get_tree().create_timer(0.3).timeout
 	
 	# Завершаем атаку
 	if alive:
 		is_attacking = false
-		attack_cooldown = ATTACK_COOLDOWN_TIME
+		attack_cooldown = attack_cooldown_time
+		
+		# После атаки сразу прыгаем
+		start_arena_jump()
 
 func take_damage(damage_amount: int) -> void:
 	if not alive or is_taking_damage:
@@ -174,13 +203,12 @@ func take_damage(damage_amount: int) -> void:
 	
 	print("Босс получает урон: ", damage_amount)
 	
-	# Уменьшаем урон для босса
-	var reduced_damage = int(damage_amount * 0.3)
+	# Уменьшаем урон для босса (но меньше чем раньше)
+	var reduced_damage = int(damage_amount * 0.5)  # 50% урона вместо 30%
 	if reduced_damage < 1:
 		reduced_damage = 1
 	
 	health -= reduced_damage
-	update_health_bar()  # ВАЖНО: обновляем полоску при получении урона
 	
 	is_taking_damage = true
 	damage_timer = DAMAGE_ANIMATION_DURATION
@@ -198,13 +226,28 @@ func take_damage(damage_amount: int) -> void:
 	# Слабый отбрасывание
 	if player_node:
 		var knockback_dir = (position - player_node.position).normalized()
-		velocity = knockback_dir * 50
-		velocity.y = -30
+		velocity = knockback_dir * 80  # Увеличил отбрасывание
+		velocity.y = -50
 	
 	print("Здоровье босса: ", health, "/", max_health)
 	
+	# Становится более агрессивным при низком здоровье
+	if health < max_health * 0.3:
+		speed = 150  # Увеличиваем скорость
+		attack_cooldown_time = 1.0  # Чаще атакует
+	
 	if health <= 0:
 		death()
+
+# Упрощенная обработка магии - просто уничтожаем при столкновении
+func _on_area_entered(area: Area2D) -> void:
+	if area.is_in_group("magic") and alive:
+		print("Босс уничтожил магию!")
+		# Просто уничтожаем магию
+		if area.has_method("queue_free"):
+			area.queue_free()
+		elif area.get_parent().has_method("queue_free"):
+			area.get_parent().queue_free()
 
 func _on_detector_body_entered(body: Node2D) -> void:
 	if body.is_in_group("player") and alive:
@@ -221,12 +264,6 @@ func death():
 	print("=== БОСС ПОБЕЖДЕН! ===")
 	alive = false
 	velocity = Vector2.ZERO
-	
-	# Скрываем полоску здоровья
-	if health_bar:
-		health_bar.visible = false
-	if health_bar_bg:
-		health_bar_bg.visible = false
 	
 	# Отключаем коллизии
 	if has_node("CollisionShape2D"):
@@ -245,13 +282,13 @@ func death():
 func spawn_rewards():
 	# Золото
 	var gold_coin_scene = preload("res://collectibles/gold.tscn")
-	for i in range(10):
+	for i in range(15):  # Увеличил награду
 		var coin = gold_coin_scene.instantiate()
 		get_parent().add_child(coin)
-		var offset = Vector2(randf_range(-60, 60), randf_range(-40, -80))
+		var offset = Vector2(randf_range(-80, 80), randf_range(-50, -100))
 		coin.position = position + offset
 		if coin.has_method("apply_impulse"):
-			var impulse = Vector2(randf_range(-80, 80), randf_range(-120, -180))
+			var impulse = Vector2(randf_range(-100, 100), randf_range(-150, -200))
 			coin.apply_impulse(impulse)
 	
 	print("Босс оставил награду!")

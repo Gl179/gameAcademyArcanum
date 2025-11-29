@@ -13,11 +13,18 @@ var max_distance: float = 2000.0  # Максимальная дистанция 
 @onready var sprite = $Sprite2D
 
 func _ready() -> void:
+	# Добавляем в группу магии для обнаружения боссом
+	add_to_group("magic")
+	
 	# Подключаем сигнал столкновения
 	body_entered.connect(_on_body_entered)
 	
 	# Автоматически удаляем через время жизни
 	get_tree().create_timer(lifetime).timeout.connect(queue_free)
+
+# Добавляем метод для получения направления (нужен боссу)
+func get_direction() -> Vector2:
+	return direction
 
 func shoot(shoot_direction: Vector2, shoot_speed: float = 800.0) -> void:
 	direction = shoot_direction.normalized()

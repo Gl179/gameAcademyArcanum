@@ -1,4 +1,4 @@
-[gd_scene load_steps=40 format=3 uid="uid://b8gxqd418sirw"]
+[gd_scene load_steps=41 format=3 uid="uid://b8gxqd418sirw"]
 
 [ext_resource type="Texture2D" uid="uid://btbkgps102b53" path="res://asets/Tiny RPG Character Asset Pack v1.03b -Free Soldier&Orc/Tiny RPG Character Asset Pack v1.03 -Free Soldier&Orc/Characters(100x100)/Orc/Orc/Orc-Idle.png" id="1_1c74i"]
 [ext_resource type="Script" uid="uid://nholnyxy7nd0" path="res://boss/orc_boss.gd" id="1_3yjpv"]
@@ -244,6 +244,9 @@ size = Vector2(27, 24.5)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_17h1c"]
 size = Vector2(38, 14)
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_3yjpv"]
+size = Vector2(35, 24)
+
 [node name="orc" type="CharacterBody2D"]
 script = ExtResource("1_3yjpv")
 
@@ -286,8 +289,15 @@ visible = false
 position = Vector2(9, 0)
 shape = SubResource("RectangleShape2D_17h1c")
 
+[node name="MagicDetector" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="MagicDetector"]
+position = Vector2(7.5, -1)
+shape = SubResource("RectangleShape2D_3yjpv")
+
 [connection signal="body_entered" from="detector" to="." method="_on_detector_body_entered"]
 [connection signal="body_exited" from="detector" to="." method="_on_detector_body_exited"]
 [connection signal="body_entered" from="Death" to="." method="_on_death_body_entered"]
 [connection signal="body_entered" from="Death2" to="." method="_on_death_2_body_entered"]
 [connection signal="body_entered" from="Attak" to="." method="_on_death_2_body_entered"]
+[connection signal="area_entered" from="MagicDetector" to="." method="_on_area_entered"]

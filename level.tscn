@@ -510,7 +510,7 @@ tile_set = SubResource("TileSet_0b4ue")
 [node name="player" type="Node2D" parent="."]
 
 [node name="player" parent="player" instance=ExtResource("1_vonw3")]
-position = Vector2(1902, 8)
+position = Vector2(142, 437)
 script = ExtResource("2_oi3di")
 
 [node name="mobs" type="Node2D" parent="."]
@@ -530,7 +530,7 @@ position = Vector2(3561, 270)
 [node name="boss" type="Node2D" parent="."]
 
 [node name="orc_boss" parent="boss" instance=ExtResource("28_hvubb")]
-position = Vector2(1159, -52)
+position = Vector2(1025, -37.000004)
 scale = Vector2(6, 6)
 script = ExtResource("7_hvubb")
 
@@ -555,10 +555,10 @@ text = "mony"
 script = SubResource("GDScript_1ainy")
 
 [node name="Virtual Joystick" parent="CanvasLayer" instance=ExtResource("6_n6hdu")]
-offset_left = 47.0
-offset_top = -177.0
-offset_right = 173.0
-offset_bottom = -43.0
+offset_left = 42.0
+offset_top = -178.0
+offset_right = 168.0
+offset_bottom = -44.0
 
 [node name="a botton" type="TouchScreenButton" parent="CanvasLayer"]
 position = Vector2(934, 527)
