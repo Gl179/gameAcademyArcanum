@@ -510,7 +510,7 @@ tile_set = SubResource("TileSet_0b4ue")
 [node name="player" type="Node2D" parent="."]
 
 [node name="player" parent="player" instance=ExtResource("1_vonw3")]
-position = Vector2(142, 437)
+position = Vector2(2054, 13)
 script = ExtResource("2_oi3di")
 
 [node name="mobs" type="Node2D" parent="."]

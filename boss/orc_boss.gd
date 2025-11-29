@@ -3,8 +3,8 @@ extends CharacterBody2D
 @onready var anim = $AnimatedSprite2D
 
 # Характеристики босса
-var speed = 120  # Увеличил скорость
-var health = 500  # Увеличил здоровье
+var speed = 120
+var health = 500
 var max_health = 500
 var chase = false
 var alive = true
@@ -16,11 +16,16 @@ var player_node: Node2D = null
 
 # Таймеры и кулдауны
 var attack_cooldown: float = 0.0
-var attack_cooldown_time: float = 1.5  # Сделал переменной вместо константы
+var attack_cooldown_time: float = 1.5
 var jump_cooldown: float = 0.0
-const JUMP_COOLDOWN_TIME: float = 2.0  # Чаще прыгает
+const JUMP_COOLDOWN_TIME: float = 2.0
 var move_timer: float = 0.0
-const MOVE_CHANGE_TIME: float = 1.5  # Чаще меняет направление
+const MOVE_CHANGE_TIME: float = 1.5
+
+# Урон от касания
+var touch_damage: int = 10
+var touch_cooldown: float = 0.0
+const TOUCH_COOLDOWN_TIME: float = 1.0
 
 # Параметры прыжка
 var is_jumping: bool = false
@@ -77,6 +82,9 @@ func _physics_process(delta: float) -> void:
 	if jump_cooldown > 0:
 		jump_cooldown -= delta
 	
+	if touch_cooldown > 0:
+		touch_cooldown -= delta
+	
 	# Таймер смены направления движения
 	move_timer -= delta
 	if move_timer <= 0:
@@ -119,7 +127,7 @@ func handle_ai_state(delta: float):
 		handle_patrol_state()
 	
 	# Частые прыжки по арене
-	if jump_cooldown <= 0 and randf() < 0.3:  # 30% шанс прыгнуть
+	if jump_cooldown <= 0 and randf() < 0.3:
 		start_arena_jump()
 	
 	# Атака при близкой дистанции
@@ -133,7 +141,7 @@ func handle_chasing_state(distance: float, direction: Vector2):
 	
 	# Иногда меняем направление для большей активности
 	if move_timer <= 0:
-		velocity.x *= -1  # Резкая смена направления
+		velocity.x *= -1
 
 func handle_patrol_state():
 	# Активное движение по арене когда игрок далеко
@@ -185,7 +193,7 @@ func start_attack():
 	if alive and player_node and position.distance_to(player_node.position) < 100:
 		print("Босс попадает по игроку!")
 		if player_node.has_method("take_damage"):
-			player_node.take_damage(25)  # Немного уменьшил урон
+			player_node.take_damage(25)
 	
 	await get_tree().create_timer(0.3).timeout
 	
@@ -193,8 +201,6 @@ func start_attack():
 	if alive:
 		is_attacking = false
 		attack_cooldown = attack_cooldown_time
-		
-		# После атаки сразу прыгаем
 		start_arena_jump()
 
 func take_damage(damage_amount: int) -> void:
@@ -203,8 +209,7 @@ func take_damage(damage_amount: int) -> void:
 	
 	print("Босс получает урон: ", damage_amount)
 	
-	# Уменьшаем урон для босса (но меньше чем раньше)
-	var reduced_damage = int(damage_amount * 0.5)  # 50% урона вместо 30%
+	var reduced_damage = int(damage_amount * 0.5)
 	if reduced_damage < 1:
 		reduced_damage = 1
 	
@@ -213,37 +218,52 @@ func take_damage(damage_amount: int) -> void:
 	is_taking_damage = true
 	damage_timer = DAMAGE_ANIMATION_DURATION
 	
-	# Визуальный эффект получения урона
 	show_damage_effect()
 	
-	# Прерываем атаку
 	if is_attacking:
 		is_attacking = false
 	
 	anim.play("hurt")
 	velocity.x = 0
 	
-	# Слабый отбрасывание
 	if player_node:
 		var knockback_dir = (position - player_node.position).normalized()
-		velocity = knockback_dir * 80  # Увеличил отбрасывание
+		velocity = knockback_dir * 80
 		velocity.y = -50
 	
 	print("Здоровье босса: ", health, "/", max_health)
 	
-	# Становится более агрессивным при низком здоровье
 	if health < max_health * 0.3:
-		speed = 150  # Увеличиваем скорость
-		attack_cooldown_time = 1.0  # Чаще атакует
+		speed = 150
+		attack_cooldown_time = 1.0
+		touch_damage = 15
 	
 	if health <= 0:
 		death()
 
-# Упрощенная обработка магии - просто уничтожаем при столкновении
-func _on_area_entered(area: Area2D) -> void:
+# УРОН ОТ КАСАНИЯ - через Area2D
+func _on_touch_area_body_entered(body: Node2D) -> void:
+	if body.is_in_group("player") and alive and touch_cooldown <= 0:
+		print("Босс касается игрока - наносит урон!")
+		if body.has_method("take_damage"):
+			body.take_damage(touch_damage)
+		
+		# Визуальный эффект
+		show_touch_effect()
+		
+		# Кулдаун
+		touch_cooldown = TOUCH_COOLDOWN_TIME
+
+func show_touch_effect():
+	# Эффект при касании
+	modulate = Color(1.8, 0.9, 0.3)
+	var tween = create_tween()
+	tween.tween_property(self, "modulate", Color(1, 1, 1), 0.2)
+
+# Уничтожение магии
+func _on_magic_detector_area_entered(area: Area2D) -> void:
 	if area.is_in_group("magic") and alive:
 		print("Босс уничтожил магию!")
-		# Просто уничтожаем магию
 		if area.has_method("queue_free"):
 			area.queue_free()
 		elif area.get_parent().has_method("queue_free"):
@@ -270,19 +290,18 @@ func death():
 		$CollisionShape2D.disabled = true
 	if has_node("detector/CollisionShape2D"):
 		$detector/CollisionShape2D.disabled = true
+	if has_node("TouchArea/CollisionShape2D"):
+		$TouchArea/CollisionShape2D.disabled = true
 	
 	anim.play("death")
-	
-	# Награда
 	spawn_rewards()
 	
 	await get_tree().create_timer(2.0).timeout
 	queue_free()
 
 func spawn_rewards():
-	# Золото
 	var gold_coin_scene = preload("res://collectibles/gold.tscn")
-	for i in range(15):  # Увеличил награду
+	for i in range(15):
 		var coin = gold_coin_scene.instantiate()
 		get_parent().add_child(coin)
 		var offset = Vector2(randf_range(-80, 80), randf_range(-50, -100))
