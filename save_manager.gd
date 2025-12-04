@@ -69,6 +69,26 @@ func save_game(crystal_id: String, crystal_position: Vector2):
 	else:
 		print("✗ Игрок не найден!")
 
+# Сохранение прогресса игрока (для дверей и других переходов)
+func save_player_progress(player_position: Vector2, health: int, gold: int):
+	print("Сохранение прогресса игрока перед переходом...")
+	
+	save_data["player_data"]["position"] = {
+		"x": player_position.x,
+		"y": player_position.y
+	}
+	save_data["player_data"]["health"] = health
+	save_data["player_data"]["gold"] = gold
+	save_data["player_data"]["current_level"] = get_tree().current_scene.scene_file_path
+	
+	# Сохраняем убитых врагов
+	save_killed_enemies()
+	
+	# Сохраняем в файл
+	save_to_file()
+	
+	print("✓ Прогресс игрока сохранен перед переходом уровня")
+
 # Загрузка игры
 func load_game():
 	var file = FileAccess.open(SAVE_FILE_PATH, FileAccess.READ)

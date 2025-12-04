@@ -3,6 +3,7 @@ extends CharacterBody2D
 @onready var anim = $AnimatedSprite2D
 
 # Характеристики босса
+signal boss_defeated
 var speed = 120
 var health = 500
 var max_health = 500
@@ -280,6 +281,7 @@ func _on_detector_body_exited(body: Node2D) -> void:
 		print("Игрок потерян")
 		chase = false
 
+# В файле orc_boss.gd добавьте в функцию death():
 func death():
 	print("=== БОСС ПОБЕЖДЕН! ===")
 	alive = false
@@ -296,6 +298,9 @@ func death():
 	anim.play("death")
 	spawn_rewards()
 	
+	# ЭМИССИЯ СИГНАЛА О ПОБЕДЕ
+	emit_signal("boss_defeated")
+	
 	await get_tree().create_timer(2.0).timeout
 	queue_free()
 
@@ -311,3 +316,5 @@ func spawn_rewards():
 			coin.apply_impulse(impulse)
 	
 	print("Босс оставил награду!")
+	
+	

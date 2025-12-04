@@ -1,6 +1,6 @@
 [gd_scene load_steps=26 format=4 uid="uid://cmlty4hkxhan8"]
 
-[ext_resource type="Script" uid="uid://77258fkcditt" path="res://level.gd" id="1_i558w"]
+[ext_resource type="Script" uid="uid://h7vtsdn5oa1h" path="res://level_2.gd" id="1_cuxq2"]
 [ext_resource type="Texture2D" uid="uid://c0xb3mud6224p" path="res://asets/oak_woods_v1.0/oak_woods_v1.0/oak_woods_tileset.png" id="2_cuxq2"]
 [ext_resource type="PackedScene" uid="uid://b74lucmfkhm23" path="res://door.tscn" id="2_wvr33"]
 [ext_resource type="PackedScene" uid="uid://bmy326nu7hcwb" path="res://Player/player.tscn" id="3_wvr33"]
@@ -484,7 +484,7 @@ func _process(_delta):
 "
 
 [node name="level2" type="Node2D"]
-script = ExtResource("1_i558w")
+script = ExtResource("1_cuxq2")
 
 [node name="door" parent="." instance=ExtResource("2_wvr33")]
 position = Vector2(13, 489)

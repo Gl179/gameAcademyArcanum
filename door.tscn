@@ -26,6 +26,14 @@ animations = [{
 "loop": false,
 "name": &"Open",
 "speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_v6xrn")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
 }]
 
 [node name="door" type="Area2D"]
@@ -38,6 +46,7 @@ shape = SubResource("RectangleShape2D_hun61")
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_50cdl")
 animation = &"Open"
-autoplay = "Open"
-frame = 1
-frame_progress = 1.0
+autoplay = "idle"
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]
+[connection signal="body_exited" from="." to="." method="_on_body_exited"]
