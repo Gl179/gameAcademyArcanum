@@ -1,4 +1,4 @@
-[gd_scene load_steps=33 format=4 uid="uid://dl5shs82crpw6"]
+[gd_scene load_steps=34 format=4 uid="uid://dl5shs82crpw6"]
 
 [ext_resource type="PackedScene" uid="uid://bmy326nu7hcwb" path="res://Player/player.tscn" id="1_vonw3"]
 [ext_resource type="Script" uid="uid://77258fkcditt" path="res://level.gd" id="1_y3bce"]
@@ -13,6 +13,7 @@
 [ext_resource type="Texture2D" uid="uid://dk1231tr564ve" path="res://asets/XBOX BUTTONS - Premium Assets/XBOX BUTTONS - Premium Assets/XBOX BUTTONS - Premium Assets/Digital Buttons/ABXY/button_xbox_digital_a_10.png" id="8_i2t4f"]
 [ext_resource type="Texture2D" uid="uid://d1so5rp8yriag" path="res://asets/XBOX BUTTONS - Premium Assets/XBOX BUTTONS - Premium Assets/XBOX BUTTONS - Premium Assets/Digital Buttons/ABXY/button_xbox_digital_y_10.png" id="8_v5j5c"]
 [ext_resource type="Texture2D" uid="uid://5may7oq5gkun" path="res://asets/XBOX BUTTONS - Premium Assets/XBOX BUTTONS - Premium Assets/XBOX BUTTONS - Premium Assets/Digital Buttons/ABXY/button_xbox_digital_y_9.png" id="9_5pxul"]
+[ext_resource type="PackedScene" uid="uid://b74lucmfkhm23" path="res://door.tscn" id="10_aoqsc"]
 [ext_resource type="Texture2D" uid="uid://c1r86m3ys7dl5" path="res://asets/XBOX BUTTONS - Premium Assets/XBOX BUTTONS - Premium Assets/XBOX BUTTONS - Premium Assets/Digital Buttons/ABXY/button_xbox_digital_x_10.png" id="10_fedht"]
 [ext_resource type="Texture2D" uid="uid://bynjavf38uocv" path="res://asets/XBOX BUTTONS - Premium Assets/XBOX BUTTONS - Premium Assets/XBOX BUTTONS - Premium Assets/Digital Buttons/ABXY/button_xbox_digital_x_9.png" id="11_4c15r"]
 [ext_resource type="Texture2D" uid="uid://diung3jy1e7fy" path="res://asets/XBOX BUTTONS - Premium Assets/XBOX BUTTONS - Premium Assets/XBOX BUTTONS - Premium Assets/Digital Buttons/ABXY/button_xbox_digital_b_10.png" id="12_ait7k"]
@@ -557,9 +558,13 @@ position = Vector2(2683, 138)
 [node name="boss" type="Node2D" parent="."]
 
 [node name="orc_boss" parent="boss" instance=ExtResource("28_hvubb")]
-position = Vector2(1025, -37.000004)
+position = Vector2(1337, -42)
 scale = Vector2(6, 6)
 script = ExtResource("7_hvubb")
+
+[node name="door" parent="boss" instance=ExtResource("10_aoqsc")]
+position = Vector2(948, 9)
+scale = Vector2(1.5, 1.5)
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
